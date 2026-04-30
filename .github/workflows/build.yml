@@ -8,25 +8,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: 构建 APK
-        run: |
-          docker run --rm -v $PWD:/home/user/app \
-            kivy/buildozer:latest \
-            /bin/bash -c '
-              cd /home/user/app
-              # 直接删除 buildozer 的 check_root 函数
-              FIND=$(python3 -c "import buildozer; print(buildozer.__file__)")
-              sed -i "/def check_root/,/^    def /{/def check_root/!{/^    def /!d}}" "$FIND"
-              sed -i "s/self.check_root()/None/" "$FIND"
-              buildozer android debug
-            ' 2>&1
+      - name: 用 Kivy Buildozer Action 构建
+        uses: ArtemSBulgakov/buildozer-action@v1
+        with:
+          workdir: .
+          buildozer_version: stable
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
         with:
           name: 自动点击器-APK
           path: bin/*.apk
+          if-no-files-found: warn
