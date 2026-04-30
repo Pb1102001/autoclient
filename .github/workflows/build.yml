@@ -48,11 +48,10 @@ jobs:
       - name: 构建 APK
         run: |
           source venv/bin/activate
-          cd autoclient
           yes | buildozer android debug 2>&1
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
         with:
           name: 自动点击器-APK
-          path: autoclient/bin/*.apk
+          path: bin/*.apk
