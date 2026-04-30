@@ -21,14 +21,6 @@ jobs:
             libffi-dev libssl-dev libltdl-dev \
             openjdk-17-jdk-headless ccache
 
-      - name: Setup SDK/NDK
-        run: |
-          # GitHub 自带 Android SDK
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-          echo "ANDROID_NDK_ROOT=$ANDROID_NDK_ROOT" >> $GITHUB_ENV
-          echo "ANDROIDAPI=34" >> $GITHUB_ENV  
-          echo "ANDROIDMINAPI=21" >> $GITHUB_ENV
-
       - name: 安装 p4a 并构建
         run: |
           python3 -m venv venv
@@ -36,7 +28,10 @@ jobs:
           pip install --upgrade pip setuptools cython
           pip install python-for-android
 
-          # 直接使用 p4a 构建
+          # 修复 NDK r27 + SDL2 兼容问题
+          export CFLAGS="-DALooper_pollAll=ALooper_pollOnce -Wno-deprecated-declarations"
+          export CXXFLAGS="-DALooper_pollAll=ALooper_pollOnce -Wno-deprecated-declarations"
+
           p4a apk \
             --private . \
             --package=com.autoclient.app \
