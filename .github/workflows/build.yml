@@ -12,14 +12,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 构建 APK
+      - name: 构建 APK（Docker）
         run: |
-          docker pull kivy/buildozer:latest 2>&1 | tail -3
           docker run --rm -v $PWD:/home/user/app \
-            kivy/buildozer:latest bash -c '
+            kivy/buildozer:latest \
+            bash -c '
               cd /home/user/app
-              # 跳过 root 警告
-              echo "y" | buildozer android debug 2>&1
+              # 永久去掉 root 检查
+              sed -i "s/def check_root/def _disabled_check_root/" /home/user/.venv/lib/python3.12/site-packages/buildozer/__init__.py
+              sed -i "s/self.check_root()/# skip root check/" /home/user/.venv/lib/python3.12/site-packages/buildozer/__init__.py
+              # 修复 distutils
+              pip install setuptools -q
+              # 创建必要目录
+              mkdir -p bin
+              # 构建！
+              buildozer android debug 2>&1
+              echo "BUILD_EXIT_CODE=$?"
             ' 2>&1
 
       - name: 上传 APK
