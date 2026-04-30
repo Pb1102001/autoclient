@@ -15,7 +15,7 @@ jobs:
       - name: 安装依赖
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq python3 python3-pip python3-setuptools python3-dev \
+          sudo apt-get install -y -qq python3 python3-pip python3-setuptools \
             git wget unzip file \
             autoconf automake libtool pkg-config \
             libffi-dev libssl-dev libltdl-dev \
@@ -28,9 +28,18 @@ jobs:
           pip install --upgrade pip setuptools cython
           pip install python-for-android
 
-          # 修复 NDK r27 + SDL2 兼容问题
-          export CFLAGS="-DALooper_pollAll=ALooper_pollOnce -Wno-deprecated-declarations"
-          export CXXFLAGS="-DALooper_pollAll=ALooper_pollOnce -Wno-deprecated-declarations"
+          # 下载 NDK r26d（兼容旧 SDL2 代码）
+          if [ ! -d "$ANDROID_SDK_ROOT/ndk/26.3.11579264" ]; then
+            echo "下载 NDK r26d..."
+            curl -sL -o /tmp/ndk.zip "https://dl.google.com/android/repository/android-ndk-r26d-linux.zip"
+            unzip -q /tmp/ndk.zip -d /tmp/
+            mkdir -p "$ANDROID_SDK_ROOT/ndk/"
+            mv /tmp/android-ndk-r26d "$ANDROID_SDK_ROOT/ndk/26.3.11579264"
+            rm /tmp/ndk.zip
+          fi
+          # 告诉 p4a 用 NDK 26
+          export NDK_CCACHE=ccache
+          export ANDROIDNDK="$ANDROID_SDK_ROOT/ndk/26.3.11579264"
 
           p4a apk \
             --private . \
@@ -49,6 +58,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: 自动点击器-APK
-          path: |
-            bin/*.apk
-            *.apk
+          path: bin/*.apk
