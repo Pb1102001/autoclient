@@ -10,15 +10,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 检出代码
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: 拉取 kivy/buildozer Docker 镜像并构建
+      - name: 构建 APK
         run: |
-          # 用官方 kivy 构建容器打包 APK
+          docker pull kivy/buildozer:latest 2>&1 | tail -3
           docker run --rm -v $PWD:/home/user/app \
-            kivy/buildozer:latest \
-            bash -c "cd /home/user/app && yes | buildozer android debug" 2>&1
+            kivy/buildozer:latest bash -c '
+              cd /home/user/app
+              # 跳过 root 警告
+              echo "y" | buildozer android debug 2>&1
+            ' 2>&1
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
