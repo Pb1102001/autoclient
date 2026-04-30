@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 安装依赖
+      - name: 安装依赖 + SDK platform 33
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq python3 python3-pip python3-setuptools \
@@ -21,6 +21,10 @@ jobs:
             libffi-dev libssl-dev libltdl-dev \
             openjdk-17-jdk-headless ccache
 
+          # 安装 API 33（SDK2 bootstrap 默认需要）
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
+            "platforms;android-33" 2>&1 | tail -3
+
       - name: 安装 p4a 并构建
         run: |
           python3 -m venv venv
@@ -28,17 +32,13 @@ jobs:
           pip install --upgrade pip setuptools cython
           pip install python-for-android
 
-          # 下载 NDK r26d（兼容旧 SDL2 代码）
+          # 用 NDK r26（避免 SDL2 编译错误）
           if [ ! -d "$ANDROID_SDK_ROOT/ndk/26.3.11579264" ]; then
-            echo "下载 NDK r26d..."
             curl -sL -o /tmp/ndk.zip "https://dl.google.com/android/repository/android-ndk-r26d-linux.zip"
             unzip -q /tmp/ndk.zip -d /tmp/
-            mkdir -p "$ANDROID_SDK_ROOT/ndk/"
             mv /tmp/android-ndk-r26d "$ANDROID_SDK_ROOT/ndk/26.3.11579264"
             rm /tmp/ndk.zip
           fi
-          # 告诉 p4a 用 NDK 26
-          export NDK_CCACHE=ccache
           export ANDROIDNDK="$ANDROID_SDK_ROOT/ndk/26.3.11579264"
 
           p4a apk \
