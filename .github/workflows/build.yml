@@ -36,12 +36,15 @@ jobs:
           python3 -m venv venv
           source venv/bin/activate
           pip install --upgrade pip setuptools cython
-
-          # 使用 develop 分支的 p4a（有 Python 3.14 Android 补丁）
           pip install git+https://github.com/kivy/python-for-android.git@develop
 
           export ANDROIDNDK="$ANDROID_SDK_ROOT/ndk/26.3.11579264"
           export NDK_CCACHE=ccache
+
+          # 告诉 Python 的 configure：Android 没有 setgrent/getgrent/endgrent
+          export ac_cv_func_setgrent=no
+          export ac_cv_func_getgrent=no
+          export ac_cv_func_endgrent=no
 
           p4a apk \
             --private . \
