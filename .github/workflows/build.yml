@@ -3,51 +3,28 @@ name: Build Android APK
 on:
   push:
     branches: [ "main", "master" ]
-    paths:
-      - 'main.py'
-      - 'buildozer.spec'
-      - '.github/workflows/build.yml'
-  pull_request:
-    branches: [ "main", "master" ]
-  workflow_dispatch:  # 手动触发
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: kivy/buildozer:latest
 
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 安装系统依赖
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq \
-            python3 python3-pip python3-venv python3-setuptools \
-            git wget unzip file \
-            autoconf automake libtool pkg-config \
-            libffi-dev libssl-dev libltdl-dev \
-            openjdk-17-jdk-headless
-
-      - name: 设置 Python 虚拟环境
-        run: |
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install buildozer cython setuptools
-
       - name: 缓存 Buildozer
-        id: cache
         uses: actions/cache@v4
         with:
           path: |
-            ~/.buildozer
+            /home/user/.buildozer
             .buildozer
           key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
 
       - name: 构建 APK
         run: |
-          source venv/bin/activate
           yes | buildozer android debug 2>&1
 
       - name: 上传 APK
