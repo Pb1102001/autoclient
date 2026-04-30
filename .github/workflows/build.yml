@@ -13,48 +13,12 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 安装依赖
+      - name: 拉取 kivy/buildozer Docker 镜像并构建
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq \
-            python3 python3-pip python3-venv python3-setuptools \
-            git wget unzip file ccache \
-            autoconf automake libtool pkg-config \
-            libffi-dev libssl-dev libltdl-dev \
-            openjdk-17-jdk-headless
-
-      - name: 安装 Python 包
-        run: |
-          python3 -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip setuptools
-          pip install python-for-android cython
-
-      - name: 缓存 p4a 构建
-        uses: actions/cache@v4
-        with:
-          path: ~/.python-for-android
-          key: ${{ runner.os }}-p4a-v1
-
-      - name: 使用 p4a 直接构建
-        env:
-          ANDROIDSDK: /usr/local/lib/android/sdk
-          ANDROIDNDK: /usr/local/lib/android/sdk/ndk/27.3.13750724
-          ANDROIDAPI: 34
-          ANDROIDMINAPI: 21
-        run: |
-          source venv/bin/activate
-          p4a apk --private . \
-            --package=com.example.autoclient \
-            --name="自动点击器" \
-            --version=1.0 \
-            --bootstrap=sdl2 \
-            --requirements=python3,kivy,ntplib,pyautogui \
-            --arch=arm64-v8a \
-            --permission=INTERNET \
-            --permission=ACCESS_NETWORK_STATE \
-            --orientation=portrait \
-            --debug 2>&1
+          # 用官方 kivy 构建容器打包 APK
+          docker run --rm -v $PWD:/home/user/app \
+            kivy/buildozer:latest \
+            bash -c "cd /home/user/app && yes | buildozer android debug" 2>&1
 
       - name: 上传 APK
         uses: actions/upload-artifact@v4
