@@ -31,7 +31,7 @@ jobs:
             mv android-ndk-r26d "$ANDROID_SDK_ROOT/ndk/26.3.11579264" && rm ndk.zip
           fi
 
-      - name: 构建 APK
+      - name: 构建 APK（强制 Python 3.11）
         run: |
           python3 -m venv venv
           source venv/bin/activate
@@ -40,11 +40,19 @@ jobs:
 
           export ANDROIDNDK="$ANDROID_SDK_ROOT/ndk/26.3.11579264"
           export NDK_CCACHE=ccache
-
-          # 告诉 Python 的 configure：Android 没有 setgrent/getgrent/endgrent
           export ac_cv_func_setgrent=no
           export ac_cv_func_getgrent=no
           export ac_cv_func_endgrent=no
+
+          # 强制使用 Python 3.11（修改 recipe 版本）
+          P4A_DIR=$(python3 -c "import pythonforandroid; import os; print(os.path.dirname(pythonforandroid.__file__))")
+          RECIPE="$P4A_DIR/recipes/python3/__init__.py"
+          # 备份原 recipe
+          cp "$RECIPE" "${RECIPE}.bak"
+          # 修改为 Python 3.11
+          sed -i 's/url = {cpython_base_url}\/3\.14\.2\/Python-3\.14\.2\.tar\.xz/url = {cpython_base_url}\/3.11.11\/Python-3.11.11.tar.xz/' "$RECIPE"
+          sed -i 's/version = "3\.14"/version = "3.11"/' "$RECIPE"
+          grep "version\|url" "$RECIPE" | head -5
 
           p4a apk \
             --private . \
